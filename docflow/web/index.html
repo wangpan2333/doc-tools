@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DocTools — 文档格式转换工具箱</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- SVG 图标精灵 -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <!-- 文档折角底纹：用作卡片/工具彩色块里的白色底图 -->
+      <symbol id="i-doc" viewBox="0 0 24 24">
+        <path d="M7 3h8l4 4v13a1.5 1.5 0 0 1-1.5 1.5h-12A1.5 1.5 0 0 1 4 20V4.5A1.5 1.5 0 0 1 5.5 3z"
+              fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+        <path d="M15 3v4h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="i-back" viewBox="0 0 24 24">
+        <path d="M14 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24">
+        <path d="M12 15V5m0 0L8 9m4-4l4 4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M5 15v3a1 1 0 001 1h12a1 1 0 001-1v-3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+      </symbol>
+      <symbol id="i-folder" viewBox="0 0 24 24">
+        <path d="M3 7a1 1 0 011-1h5l2 2h9a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="i-bolt" viewBox="0 0 24 24">
+        <path d="M13 2L4 14h6l-1 8 9-12h-6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24">
+        <path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+        <path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="i-grid" viewBox="0 0 24 24">
+        <rect x="4" y="4" width="7" height="7" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.7"/>
+        <rect x="13" y="4" width="7" height="7" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.7"/>
+        <rect x="4" y="13" width="7" height="7" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.7"/>
+        <rect x="13" y="13" width="7" height="7" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.7"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <div class="app">
+    <!-- 侧栏 -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-logo"><svg class="ic"><use href="#i-bolt"/></svg></div>
+        <div class="brand-text">
+          <div class="brand-name">DocTools</div>
+          <div class="brand-sub">文档转换工具箱</div>
+        </div>
+      </div>
+
+      <div class="nav-title">转换分类</div>
+      <nav class="nav" id="nav"><!-- JS 渲染分类 --></nav>
+
+      <div class="sidebar-foot">
+        <svg class="ic"><use href="#i-shield"/></svg>
+        <span>本地运行 · 文件不上传</span>
+      </div>
+    </aside>
+
+    <!-- 内容 -->
+    <main class="content">
+      <!-- ===== 首页（卡片网格） ===== -->
+      <section class="home" id="homeView">
+        <header class="home-head">
+          <h2 id="catTitle">PDF 转换</h2>
+          <p id="catSub">选择下面的工具开始处理</p>
+        </header>
+        <div class="cards" id="cards"><!-- JS 渲染 --></div>
+      </section>
+
+      <!-- ===== 处理页（全屏） ===== -->
+      <section class="tool" id="toolView" hidden>
+        <div class="tool-top">
+          <button class="back-btn" id="backBtn" title="返回">
+            <svg class="ic"><use href="#i-back"/></svg>
+          </button>
+          <div class="tool-badge" id="toolBadge"><!-- JS 注入彩色块 --></div>
+          <div class="tool-head-text">
+            <h1 id="toolName">PDF 转 Word</h1>
+            <p id="toolDesc">把 PDF 还原成可编辑的 Word 文档</p>
+          </div>
+          <div class="engine-badge" id="engineBadge"></div>
+        </div>
+
+        <div class="info-banner" id="infoBanner" hidden></div>
+        <div class="warn-banner" id="warnBanner" hidden></div>
+
+        <div class="panel">
+          <div class="dropzone" id="dropzone">
+            <svg class="ic dz-icon"><use href="#i-upload"/></svg>
+            <div class="dz-title">点击选择文件，或将文件拖入此处</div>
+            <div class="dz-sub" id="dzSub">支持 .pdf</div>
+          </div>
+
+          <div class="chips" id="chips"></div>
+
+          <div class="row">
+            <label class="field">
+              <span class="field-label">输出目录</span>
+              <div class="input-wrap">
+                <input type="text" id="outDir" value="./output" placeholder="./output" />
+                <button class="browse-btn" id="browseBtn" title="选择目录">
+                  <svg class="ic"><use href="#i-folder"/></svg>
+                </button>
+              </div>
+            </label>
+            <label class="field field-sm">
+              <span class="field-label">重名处理</span>
+              <select id="conflict">
+                <option value="skip">跳过已存在</option>
+                <option value="force">覆盖</option>
+              </select>
+            </label>
+          </div>
+
+          <button class="convert-btn" id="convertBtn">
+            <svg class="ic"><use href="#i-bolt"/></svg>
+            <span>开始转换</span>
+          </button>
+
+          <div class="tasks-head">
+            <span class="tasks-title">任务列表</span>
+            <span class="tasks-count" id="tasksCount">0 / 0 完成</span>
+          </div>
+          <div class="tasks" id="tasks">
+            <div class="tasks-empty" id="tasksEmpty">还没有任务，选择文件后点击「开始转换」。</div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>docflow 原型 · 卡片式导航</title>
+<style>
+  :root{
+    --bg:#f5f6fa; --side:#ffffff; --line:#eceef4;
+    --card:#ffffff; --txt:#1f2430; --sub:#8a90a2;
+    --accent:#6366f1; --accent2:#8b5cf6; --act:#4f46e5;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--txt);height:100vh;overflow:hidden}
+  .hub{display:flex;height:100vh}
+  .sidebar{width:248px;flex:0 0 248px;background:var(--side);border-right:1px solid var(--line);
+    color:var(--txt);display:flex;flex-direction:column;padding:22px 13px}
+  .brand{display:flex;align-items:center;gap:11px;padding:4px 10px 22px;font-weight:700;font-size:19px;letter-spacing:.5px}
+  .brand .dot{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 4px 12px rgba(99,102,241,.35)}
+  .nav-cap{font-size:11px;color:#9aa0b5;padding:6px 12px;letter-spacing:1.5px}
+  .cat{position:relative;display:flex;align-items:center;gap:11px;padding:12px 12px;border-radius:11px;cursor:pointer;
+    color:#5b6175;font-size:14.5px;margin-bottom:5px;transition:.15s}
+  .cat:hover{background:#f3f4f9;color:var(--txt)}
+  .cat.active{background:rgba(99,102,241,.10);color:var(--act);font-weight:600}
+  .cat.active::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:3px;background:linear-gradient(180deg,var(--accent),var(--accent2))}
+  .cat .ico{width:21px;height:21px;flex:0 0 21px}
+  .side-foot{margin-top:auto;font-size:11px;color:#aab0c0;padding:10px 12px;line-height:1.6}
+
+  .content{flex:1;display:flex;flex-direction:column;overflow:auto}
+  .ct-head{padding:30px 38px 8px}
+  .ct-head h1{font-size:23px;font-weight:700}
+  .ct-head p{color:var(--sub);font-size:13.5px;margin-top:6px}
+  .grid{padding:18px 34px 40px;display:grid;grid-template-columns:repeat(auto-fill,minmax(214px,1fr));gap:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:20px 18px;cursor:pointer;
+    transition:.16s;position:relative}
+  .card:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(40,50,90,.12);border-color:transparent}
+  .card .tile{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 12px rgba(0,0,0,.12);margin-bottom:14px}
+  .card .tile svg{width:28px;height:28px}
+  .card .ctitle{font-size:15.5px;font-weight:650;margin-top:15px}
+  .card .cdesc{font-size:12.5px;color:var(--sub);margin-top:5px;line-height:1.5}
+  .card .arrow{position:absolute;right:16px;bottom:16px;color:var(--sub);opacity:0;transition:.16s;font-size:15px}
+  .card:hover .arrow{opacity:1;color:var(--accent)}
+
+  .work{display:none;flex-direction:column;height:100vh;background:var(--bg)}
+  .work.show{display:flex}
+  .topbar{height:60px;flex:0 0 60px;background:#fff;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:14px;padding:0 22px}
+  .back{display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--txt);font-size:14px;
+    padding:8px 12px;border-radius:10px;transition:.15s}
+  .back:hover{background:#eef0f8}
+  .back svg{width:18px;height:18px}
+  .topbar .wname{font-weight:650;font-size:15.5px}
+  .topbar .wsub{color:var(--sub);font-size:12.5px;margin-left:2px}
+  .wbody{flex:1;overflow:auto;padding:34px}
+  .panel{max-width:880px;margin:0 auto}
+  .drop{border:2px dashed #c7cce0;background:#fff;border-radius:16px;padding:46px 24px;text-align:center;
+    cursor:pointer;transition:.15s}
+  .drop:hover{border-color:var(--accent);background:#fbfbff}
+  .drop .big{font-size:15px;font-weight:600;margin-top:14px}
+  .drop .small{color:var(--sub);font-size:12.5px;margin-top:6px}
+  .opts{display:flex;flex-wrap:wrap;gap:18px;margin:24px 0;background:#fff;border:1px solid var(--line);
+    border-radius:14px;padding:20px 22px}
+  .opt{display:flex;flex-direction:column;gap:7px}
+  .opt label{font-size:12.5px;color:var(--sub)}
+  .opt select,.opt input{font-size:13.5px;padding:8px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;min-width:150px}
+  .run{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;
+    padding:13px 30px;border-radius:11px;font-size:14.5px;font-weight:600;cursor:pointer;transition:.15s}
+  .run:hover{filter:brightness(1.07)}
+  .tasks{margin-top:22px;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .tasks .th{padding:13px 18px;border-bottom:1px solid var(--line);font-size:13px;color:var(--sub);font-weight:600}
+  .task{display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid #f0f2f8;font-size:13.5px}
+  .task:last-child{border-bottom:none}
+  .task .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar{width:140px;height:7px;background:#eef0f8;border-radius:6px;overflow:hidden}
+  .bar > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:.3s}
+  .task .st{font-size:12px;color:var(--sub);width:64px;text-align:right}
+  .task.done .st{color:#1aa463}
+</style>
+</head>
+<body>
+
+<!-- ===================== HUB ===================== -->
+<div class="hub" id="hub">
+  <aside class="sidebar">
+    <div class="brand"><span class="dot">🛠️</span> docflow</div>
+    <div class="nav-cap">工具分类</div>
+    <div class="cat active" data-cat="pdf">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>
+      PDF 转换
+    </div>
+    <div class="cat" data-cat="word">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>
+      Word 转换
+    </div>
+    <div class="cat" data-cat="img">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>
+      图片转换
+    </div>
+    <div class="side-foot">本地运行 · 文件不出本机</div>
+  </aside>
+
+  <main class="content">
+    <div class="ct-head">
+      <h1 id="catTitle">PDF 转换</h1>
+      <p id="catSub">选择要执行的任务，点击卡片进入处理页</p>
+    </div>
+    <div class="grid" id="grid"></div>
+  </main>
+</div>
+
+<!-- ===================== 处理页 ===================== -->
+<div class="work" id="work">
+  <div class="topbar">
+    <div class="back" onclick="goHub()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      返回
+    </div>
+    <div>
+      <span class="wname" id="wName">PDF 转 Word</span>
+      <span class="wsub" id="wSub">· 上传文件后点击开始转换</span>
+    </div>
+  </div>
+  <div class="wbody">
+    <div class="panel">
+      <div class="drop" onclick="fakePick()">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" style="margin:0 auto;display:block"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+        <div class="big">点击或拖拽文件到此处</div>
+        <div class="small">支持批量 · 也可从电脑选择多个文件</div>
+      </div>
+
+      <div class="opts">
+        <div class="opt"><label>输出格式</label><select><option>.docx</option><option>.doc</option><option>.rtf</option><option>.txt</option></select></div>
+        <div class="opt"><label>页码范围</label><input placeholder="如 1-3,5 留空=全部"></div>
+        <div class="opt"><label>同名冲突</label><select><option>覆盖</option><option>跳过</option><option>加序号</option></select></div>
+        <div class="opt"><label>输出目录</label><input value="与原文件同目录" style="min-width:200px"></div>
+      </div>
+
+      <button class="run" onclick="fakeRun()">开始转换</button>
+
+      <div class="tasks" id="tasks" style="display:none">
+        <div class="th">任务列表</div>
+        <div id="taskList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// hipdf 风格：彩色圆角方块 + 白色文档/符号
+function docIcon(color, sym){
+  return `<svg viewBox="0 0 48 48">
+    <rect width="48" height="48" rx="13" fill="${color}"/>
+    <path d="M15 13h14l7 7v16H15V13z" fill="none" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/>
+    <path d="M29 13v7h7" fill="none" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/>
+    <text x="24" y="33" text-anchor="middle" font-size="11" font-weight="800" fill="#fff">${sym}</text>
+  </svg>`;
+}
+function photoIcon(color){
+  return `<svg viewBox="0 0 48 48">
+    <rect width="48" height="48" rx="13" fill="${color}"/>
+    <rect x="11" y="14" width="26" height="20" rx="4" fill="none" stroke="#fff" stroke-width="2.4"/>
+    <circle cx="19" cy="22" r="3" fill="#fff"/>
+    <path d="M13 34l9-9 6 6 5-5 2 2v6H13z" fill="#fff" opacity=".95"/>
+  </svg>`;
+}
+function codeIcon(color){
+  return `<svg viewBox="0 0 48 48">
+    <rect width="48" height="48" rx="13" fill="${color}"/>
+    <path d="M18 17l-7 7 7 7" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M30 17l7 7-7 7" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M27 11l-6 26" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+  </svg>`;
+}
+function mergeIcon(color){
+  return `<svg viewBox="0 0 48 48">
+    <rect width="48" height="48" rx="13" fill="${color}"/>
+    <path d="M13 14h10v10H13z" fill="none" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M25 24h10v10H25z" fill="none" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M23 20v8h-3l4 5 4-5h-3v-8" fill="#fff"/>
+  </svg>`;
+}
+function compressIcon(color){
+  return `<svg viewBox="0 0 48 48">
+    <rect width="48" height="48" rx="13" fill="${color}"/>
+    <path d="M15 13h18a2 2 0 0 1 2 2v18a2 2 0 0 1-2 2H15a2 2 0 0 1-2-2V15a2 2 0 0 1 2-2z" fill="none" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/>
+    <path d="M24 18v10" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M19 25l5 5 5-5" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M14 32h20" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+  </svg>`;
+}
+function splitIcon(color){
+  return `<svg viewBox="0 0 48 48">
+    <rect width="48" height="48" rx="13" fill="${color}"/>
+    <path d="M15 13h18a2 2 0 0 1 2 2v18a2 2 0 0 1-2 2H15a2 2 0 0 1-2-2V15a2 2 0 0 1 2-2z" fill="none" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/>
+    <path d="M24 13v20" stroke="#fff" stroke-width="1.8" stroke-dasharray="3 2"/>
+    <path d="M28 26l4 3" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+    <path d="M20 26l-4 3" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+  </svg>`;
+}
+function tile(kind,color){
+  let svg='';
+  switch(kind){
+    case 'word':  svg=docIcon(color,'W'); break;
+    case 'excel': svg=docIcon(color,'X'); break;
+    case 'ppt':   svg=docIcon(color,'P'); break;
+    case 'pdf':   svg=docIcon(color,'PDF'); break;
+    case 'img':   svg=photoIcon(color); break;
+    case 'html':  svg=codeIcon(color); break;
+    case 'merge': svg=mergeIcon(color); break;
+    case 'compress': svg=compressIcon(color); break;
+    case 'split': svg=splitIcon(color); break;
+  }
+  return `<div class="tile" style="background:${color}">${svg}</div>`;
+}
+
+const DATA = {
+  pdf: { title:"PDF 转换", sub:"选择要执行的任务，点击卡片进入处理页", cards:[
+    {t:"PDF 转 Word",  d:"文本型 PDF 还原为可编辑 Word", kind:"word",   color:"#2b7cff"},
+    {t:"PDF 转 Excel", d:"表格提取为 xlsx 可编辑",        kind:"excel",  color:"#1db954"},
+    {t:"PDF 转 PPT",   d:"每页转成幻灯片页",              kind:"ppt",    color:"#ff8a3d"},
+    {t:"PDF 转 图片",  d:"逐页导出 PNG / JPG",            kind:"img",    color:"#00c2a2"},
+    {t:"PDF 转 HTML",  d:"保留排版的网页文件",            kind:"html",   color:"#0d9488"},
+    {t:"PDF 合并",     d:"多个 PDF 合成一个",             kind:"merge",  color:"#7c5cff"},
+    {t:"PDF 压缩",     d:"减小体积，便于分享",            kind:"compress",color:"#ff6b6b"},
+    {t:"PDF 拆分",     d:"按页或范围拆成多份",            kind:"split",  color:"#f5a623"},
+  ]},
+  word: { title:"Word 转换", sub:"示例占位 · 当前已实现 Word 转 PDF", cards:[
+    {t:"Word 转 PDF",  d:"保持排版导出 PDF",   kind:"pdf", color:"#ed4b4b"},
+    {t:"Word 转 图片", d:"渲染为高清图片",     kind:"img", color:"#00c2a2"},
+  ]},
+  img: { title:"图片转换", sub:"示例占位 · 后续扩展", cards:[
+    {t:"图片 转 PDF",  d:"多张图合成 PDF",     kind:"pdf", color:"#ed4b4b"},
+    {t:"图片 转 Word", d:"OCR 识别后转文档",   kind:"word",color:"#2b7cff"},
+  ]},
+};
+
+function render(cat){
+  const d = DATA[cat];
+  document.getElementById('catTitle').textContent = d.title;
+  document.getElementById('catSub').textContent = d.sub;
+  const grid = document.getElementById('grid');
+  grid.innerHTML = d.cards.map(c=>`
+    <div class="card" onclick="goWork('${c.t}')">
+      ${tile(c.kind,c.color)}
+      <div class="ctitle">${c.t}</div>
+      <div class="cdesc">${c.d}</div>
+      <div class="arrow">→</div>
+    </div>`).join('');
+}
+
+document.querySelectorAll('.cat').forEach(el=>{
+  el.addEventListener('click',()=>{
+    document.querySelectorAll('.cat').forEach(x=>x.classList.remove('active'));
+    el.classList.add('active');
+    render(el.dataset.cat);
+  });
+});
+
+function goWork(name){
+  document.getElementById('hub').style.display='none';
+  const w=document.getElementById('work'); w.classList.add('show');
+  document.getElementById('wName').textContent=name;
+}
+function goHub(){
+  document.getElementById('work').classList.remove('show');
+  document.getElementById('hub').style.display='flex';
+}
+
+function fakePick(){
+  document.getElementById('tasks').style.display='block';
+  document.getElementById('taskList').innerHTML =
+    ['report.pdf','合同.pdf','讲义.pdf'].map(n=>`
+      <div class="task"><div class="nm">${n}</div>
+      <div class="bar"><i style="width:0%"></i></div><div class="st">等待中</div></div>`).join('');
+}
+function fakeRun(){
+  document.querySelectorAll('.task').forEach((t,idx)=>{
+    const bar=t.querySelector('.bar > i'), st=t.querySelector('.st');
+    st.textContent='转换中';
+    let p=0; const id=setInterval(()=>{
+      p+=12+Math.random()*16; if(p>=100){p=100;clearInterval(id);st.textContent='完成';t.classList.add('done');}
+      bar.style.width=p+'%';
+    },180+idx*40);
+  });
+}
+
+render('pdf');
+</script>
+</body>
+</html>

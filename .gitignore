@@ -1,0 +1,21 @@
+# 项目数据 / 会话记忆
+.workbuddy/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 运行日志
+docflow/logs/
+
+# 转换产物（输入书籍与输出文档，体积大且不便入库）
+docflow/input/
+docflow/output/
+docflow/test_out/
+
+# 第三方大文件（Ghostscript 安装包、Tesseract 语言包等）
+docflow/lib/
+docflow/tessdata/

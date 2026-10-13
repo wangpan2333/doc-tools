@@ -1,0 +1,4 @@
+pywebview>=5.0
+exactdoc==0.3.0b1
+ocrmypdf>=15.0
+pdf2docx>=0.5
